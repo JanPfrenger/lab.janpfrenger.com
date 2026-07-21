@@ -20,6 +20,18 @@
         });
     }
 
+    var age = document.getElementById('age');
+
+    if (age) {
+        var today = new Date();
+        var calculatedAge = today.getFullYear() - 2004;
+        var birthdayHasPassed = today.getMonth() > 2 ||
+            (today.getMonth() === 2 && today.getDate() >= 23);
+
+        if (!birthdayHasPassed) calculatedAge -= 1;
+        age.textContent = String(calculatedAge);
+    }
+
     var errorCanvas = document.getElementById('errorCanvas');
 
     if (errorCanvas) {
