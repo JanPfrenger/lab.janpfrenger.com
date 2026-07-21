@@ -5,12 +5,13 @@
     background-size: 24px 24px;
     background-position: -1px -1px;
 }
-.directory .page { width: 100%; max-width: none; padding-inline: var(--directory-gutter); }
+.directory .page { width: min(100%, 1600px); max-width: 1600px; margin-inline: auto; padding-inline: var(--directory-gutter); }
 .directory main { width: 100%; max-width: none; }
 
 .directory-hero {
     min-height: min(520px, calc(100vh - 96px));
     padding: clamp(58px, 7vw, 96px) 0 clamp(50px, 6vw, 76px);
+    padding-inline: max(0px, calc((100% - 1500px) / 2));
     display: grid;
     grid-template-columns: minmax(0, 1.35fr) minmax(280px, .65fr);
     align-items: end;
@@ -54,6 +55,8 @@
 
 .directory-index { padding: clamp(58px, 6.5vw, 96px) 0; }
 .directory-section-head {
+    width: min(100%, 1500px);
+    margin-inline: auto;
     margin-bottom: clamp(46px, 6vw, 76px);
     display: flex;
     justify-content: space-between;
@@ -72,7 +75,7 @@
 }
 .directory-section-head p { max-width: 34ch; color: var(--text-2); font-size: 13px; }
 
-.directory-grid { grid-template-columns: repeat(2, 1fr); }
+.directory-grid { width: min(100%, 1500px); margin-inline: auto; grid-template-columns: repeat(2, 1fr); }
 .directory-grid .project-card { min-height: 310px; }
 .directory-grid .project-card:nth-child(2n) { border-right: 0; }
 .directory-grid .project-card:nth-child(-n + 2) { border-bottom: 1px solid var(--line); }

@@ -417,7 +417,7 @@ hr { margin: 64px 0; border: 0; border-top: 1px solid var(--line); }
 .accent-text, .accent-link { color: var(--accent); }
 .accent-link { text-decoration-color: var(--accent); }
 
-.interior .page { width: 100%; max-width: none; }
+.interior .page { width: min(100%, 1600px); max-width: 1600px; margin-inline: auto; }
 .interior main { width: 100%; max-width: none; background: transparent; }
 .interior-hero {
     min-height: 440px;
@@ -447,7 +447,8 @@ hr { margin: 64px 0; border: 0; border-top: 1px solid var(--line); }
 .interior-section {
     padding: clamp(34px, 4vw, 52px) var(--interior-gutter);
     display: grid;
-    grid-template-columns: minmax(145px, .26fr) minmax(0, 1.74fr);
+    grid-template-columns: minmax(145px, 190px) minmax(0, 880px);
+    justify-content: center;
     gap: 20px clamp(28px, 4vw, 64px);
     border-bottom: 1px solid var(--line);
     background: transparent;
@@ -550,7 +551,8 @@ ul.flat li { margin: 0; }
     margin: 0;
     padding: clamp(34px, 4vw, 52px) var(--interior-gutter);
     display: grid;
-    grid-template-columns: minmax(145px, .26fr) minmax(0, 1.74fr);
+    grid-template-columns: minmax(145px, 190px) minmax(0, 880px);
+    justify-content: center;
     gap: 0 clamp(28px, 4vw, 64px);
     border-bottom: 1px solid var(--line);
     background: transparent;
