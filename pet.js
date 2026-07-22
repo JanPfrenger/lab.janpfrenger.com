@@ -1,14 +1,21 @@
 /**
- * DeskBreak Coder website companion
- * Original pet artwork by SwainWongStudio, distributed through codex-pets.net.
- * The companion stays fixed in one corner and only changes sprite animations.
+ * Jan, the DeskBreak Coder page companion.
+ * Original artwork by SwainWongStudio, distributed through codex-pets.net.
+ * Jan sits on the footer divider and scrolls with the page.
  */
-(function deskbreakCoderCompanion(global) {
+(function pageJanCompanion(global) {
   "use strict";
 
-  if (!document.body) return;
+  if (!document.body || document.body.classList.contains("error-page")) return;
 
-  const storageKey = "jp-dot-enabled";
+  const footer = document.querySelector("footer:not(.error-footer)");
+  if (!footer) return;
+
+  const perch = document.createElement("div");
+  perch.className = "page-jan-perch";
+  perch.setAttribute("aria-hidden", "true");
+  footer.parentNode.insertBefore(perch, footer);
+
   const reducedMotion = global.matchMedia("(prefers-reduced-motion: reduce)");
   const states = {
     idle: { row: 0, frames: 6, frameMs: 310, loops: Infinity },
@@ -20,9 +27,6 @@
   };
   const specialStates = ["wave", "failed", "waiting", "running", "review"];
 
-  let enabled = readPreference();
-  let root = null;
-  let sprite = null;
   let animationFrame = 0;
   let stateName = "idle";
   let frameIndex = 0;
@@ -30,28 +34,21 @@
   let lastFrameAt = performance.now();
   let nextSpecialAt = lastFrameAt + randomBetween(12000, 22000);
 
-  function readPreference() {
-    try {
-      return global.localStorage.getItem(storageKey) !== "off";
-    } catch (error) {
-      return true;
-    }
-  }
+  const root = document.createElement("div");
+  root.className = "page-jan";
+  root.dataset.state = "idle";
+  root.setAttribute("aria-hidden", "true");
 
-  function writePreference(value) {
-    try {
-      global.localStorage.setItem(storageKey, value ? "on" : "off");
-    } catch (error) {
-      // Keep the in-memory preference when storage is unavailable.
-    }
-  }
+  const sprite = document.createElement("span");
+  sprite.className = "page-jan-sprite";
+  root.appendChild(sprite);
+  perch.appendChild(root);
 
   function randomBetween(minimum, maximum) {
     return minimum + Math.random() * (maximum - minimum);
   }
 
   function applyFrame() {
-    if (!sprite) return;
     const state = states[stateName];
     const x = (frameIndex / 7) * 100;
     const y = (state.row / 8) * 100;
@@ -76,14 +73,10 @@
 
   function tick(time) {
     animationFrame = 0;
-    if (!root || !enabled || document.hidden) return;
+    if (document.hidden) return;
 
     if (reducedMotion.matches) {
-      if (stateName !== "idle" || frameIndex !== 0) {
-        stateName = "idle";
-        frameIndex = 0;
-        applyFrame();
-      }
+      if (stateName !== "idle" || frameIndex !== 0) setState("idle");
       return;
     }
 
@@ -111,8 +104,6 @@
   }
 
   function start() {
-    if (!root || !enabled) return;
-    root.dataset.disabled = "false";
     root.classList.add("is-visible");
     if (reducedMotion.matches) {
       setState("idle");
@@ -124,69 +115,17 @@
     }
   }
 
-  function stop() {
-    if (animationFrame) global.cancelAnimationFrame(animationFrame);
-    animationFrame = 0;
-    if (root) {
-      root.dataset.disabled = "true";
-      root.classList.remove("is-visible");
-    }
-  }
-
-  function updateToggle(button = document.querySelector(".dot-pet-toggle")) {
-    if (!button) return;
-    button.textContent = `pet: ${enabled ? "on" : "off"}`;
-    button.setAttribute("aria-pressed", String(enabled));
-    button.setAttribute("aria-label", enabled ? "Hide DeskBreak Coder" : "Show DeskBreak Coder");
-    button.title = enabled ? "Hide DeskBreak Coder" : "Show DeskBreak Coder";
-  }
-
-  function createToggle() {
-    const footer = document.querySelector("footer");
-    if (!footer || footer.querySelector(".dot-pet-toggle")) return;
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "dot-pet-toggle";
-    button.addEventListener("click", () => {
-      enabled = !enabled;
-      writePreference(enabled);
-      if (enabled) start();
-      else stop();
-      updateToggle(button);
-    });
-    footer.appendChild(button);
-    updateToggle(button);
-  }
-
-  function mount() {
-    root = document.createElement("div");
-    root.className = "deskbreak-pet";
-    root.dataset.disabled = String(!enabled);
-    root.dataset.state = "idle";
-    root.setAttribute("aria-hidden", "true");
-
-    sprite = document.createElement("span");
-    sprite.className = "deskbreak-pet-sprite";
-    root.appendChild(sprite);
-    document.body.appendChild(root);
-
-    setState("idle");
-    createToggle();
-    if (enabled) global.requestAnimationFrame(() => start());
-  }
-
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
       if (animationFrame) global.cancelAnimationFrame(animationFrame);
       animationFrame = 0;
-    } else if (enabled) {
+    } else {
       nextSpecialAt = performance.now() + randomBetween(8000, 16000);
       start();
     }
   });
 
   reducedMotion.addEventListener("change", () => {
-    if (!enabled) return;
     if (reducedMotion.matches) {
       if (animationFrame) global.cancelAnimationFrame(animationFrame);
       animationFrame = 0;
@@ -197,5 +136,6 @@
     }
   });
 
-  mount();
+  setState("idle");
+  global.requestAnimationFrame(start);
 })(window);

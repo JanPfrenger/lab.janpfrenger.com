@@ -1,12 +1,18 @@
-.deskbreak-pet {
-  position: fixed;
-  right: clamp(14px, 2.2vw, 34px);
-  bottom: clamp(14px, 2.2vw, 30px);
-  z-index: 9998;
-  width: clamp(124px, 10.5vw, 164px);
+.page-jan-perch {
+  position: relative;
+  min-height: clamp(178px, 15vw, 214px);
+  pointer-events: none;
+}
+
+.page-jan {
+  position: absolute;
+  right: clamp(20px, 4vw, 68px);
+  bottom: -1px;
+  z-index: 3;
+  width: clamp(156px, 13vw, 190px);
   aspect-ratio: 192 / 208;
   opacity: 0;
-  transform: translateY(8px) scale(.98);
+  transform: translateY(1px) scale(.98);
   transform-origin: 50% 100%;
   pointer-events: none;
   user-select: none;
@@ -15,16 +21,12 @@
   contain: layout paint style;
 }
 
-.deskbreak-pet.is-visible {
-  opacity: .94;
-  transform: translateY(0) scale(1);
+.page-jan.is-visible {
+  opacity: .96;
+  transform: translateY(1px) scale(1);
 }
 
-.deskbreak-pet[data-disabled="true"] {
-  display: none;
-}
-
-.deskbreak-pet-sprite {
+.page-jan-sprite {
   position: absolute;
   inset: 0;
   display: block;
@@ -36,52 +38,24 @@
   will-change: background-position;
 }
 
-.dot-pet-toggle {
-  appearance: none;
-  width: max-content;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  letter-spacing: inherit;
-  text-transform: inherit;
-  text-decoration: underline;
-  text-decoration-color: currentColor;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 4px;
-  opacity: .68;
-  cursor: pointer;
-  transition: color .18s ease, opacity .18s ease;
-}
-
-.dot-pet-toggle:hover,
-.dot-pet-toggle:focus-visible {
-  color: var(--accent, #d9ff62);
-  opacity: 1;
-}
-
 @media (max-width: 780px) {
-  .deskbreak-pet {
-    right: 8px;
-    bottom: 10px;
-    width: clamp(98px, 28vw, 118px);
-    filter: drop-shadow(0 7px 13px rgba(0, 0, 0, .14));
+  .page-jan-perch {
+    min-height: clamp(104px, 31vw, 126px);
   }
 
-  body.error-page .deskbreak-pet {
-    right: 4px;
-    bottom: 3px;
-    width: 64px;
+  .page-jan {
+    right: clamp(8px, 5vw, 22px);
+    width: clamp(82px, 23vw, 104px);
+    filter: drop-shadow(0 7px 13px rgba(0, 0, 0, .14));
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .deskbreak-pet {
+  .page-jan {
     transition: none;
   }
 
-  .deskbreak-pet-sprite {
+  .page-jan-sprite {
     will-change: auto;
   }
 }
