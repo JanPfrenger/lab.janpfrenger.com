@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/style.css?v=20260722i">
     <link rel="stylesheet" href="/directory.css?v=20260722d">
+    <link rel="stylesheet" href="/pet.css?v=20260722b">
     <link rel="canonical" href="https://lab.janpfrenger.com/">
 
     <meta property="og:site_name" content="Jan Pfrenger" />
@@ -34,7 +35,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="manifest" href="/assets/site.webmanifest">
 </head>
-<body class="directory">
+<body class="directory" data-site="lab" data-scene="directory">
     <div class="page">
         <header class="header">
             <a href="/" class="logo" aria-label="Jan's Lab, home">
@@ -68,7 +69,7 @@
 
                 <div class="project-grid directory-grid">
                     <!-- Replace article with: <a class="project-card project-card-featured" href="/experiment-slug/"> ... </a> -->
-                    <article class="project-card project-card-featured">
+                    <article class="project-card project-card-featured" data-pet-lab-card>
                         <div class="directory-card-top"><span>TEST / 001</span><span class="directory-status">open</span></div>
                         <div class="project-card-copy">
                             <p class="project-type">Hardware · Software · Idea</p>
@@ -115,5 +116,6 @@
         </footer>
     </div>
     <script src="/script.js?v=20260722e"></script>
+    <script src="/pet.js?v=20260722b"></script>
 </body>
 </html>

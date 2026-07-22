@@ -1,0 +1,164 @@
+.dot-pet-layer {
+  --dot-pet-accent: var(--accent, #d9ff62);
+  --dot-pet-ink: var(--text, #11120f);
+  --dot-pet-paper: var(--bg, #f0eee6);
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  overflow: hidden;
+  pointer-events: none;
+  contain: strict;
+  isolation: isolate;
+}
+
+.dot-pet-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.dot-pet-hitbox {
+  display: none;
+}
+
+.dot-pet-hitbox::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.dot-pet-hitbox:hover::after {
+  border-color: color-mix(in srgb, var(--dot-pet-accent) 42%, transparent);
+}
+
+.dot-pet-hitbox:focus-visible {
+  outline: none;
+}
+
+.dot-pet-hitbox:focus-visible::after {
+  border-color: var(--dot-pet-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--dot-pet-ink) 72%, transparent);
+}
+
+.dot-pet-layer[data-hidden="true"] + .dot-pet-hitbox,
+.dot-pet-layer[data-disabled="true"] + .dot-pet-hitbox {
+  pointer-events: none;
+}
+
+@media (pointer: coarse), (hover: none) {
+  .dot-pet-layer[data-touch="disabled"],
+  .dot-pet-layer[data-touch="disabled"] + .dot-pet-hitbox {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot-pet-layer[data-reduced="hide"],
+  .dot-pet-layer[data-reduced="hide"] + .dot-pet-hitbox {
+    display: none;
+  }
+}
+
+html.dot-pet-active .cursor-follower {
+  display: none !important;
+}
+
+html.dot-pet-active:not(.dot-pet-detached),
+html.dot-pet-active:not(.dot-pet-detached) a,
+html.dot-pet-active:not(.dot-pet-detached) button,
+html.dot-pet-active:not(.dot-pet-detached) [role="button"] {
+  cursor: none;
+}
+
+html.dot-pet-detached,
+html.dot-pet-detached a,
+html.dot-pet-detached button,
+html.dot-pet-detached [role="button"] {
+  cursor: revert !important;
+}
+
+.dot-pet-toggle {
+  appearance: none;
+  width: max-content;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  text-decoration: underline;
+  text-decoration-color: currentColor;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  opacity: .68;
+  cursor: pointer;
+  transition: color .18s ease, opacity .18s ease;
+}
+
+.dot-pet-toggle:hover,
+.dot-pet-toggle:focus-visible {
+  color: var(--accent, #d9ff62);
+  opacity: 1;
+}
+
+.dot-pet-letter-clone,
+.dot-pet-washer,
+.dot-pet-bench-label {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  user-select: none;
+  contain: layout style paint;
+}
+
+[data-pet-letter="jobs-o"],
+[data-pet-jobs-tail] {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+.dot-pet-letter-clone {
+  margin: 0;
+  padding: 0;
+  color: var(--text);
+  transform-origin: 50% 62%;
+  will-change: transform, opacity;
+}
+
+.dot-pet-washer {
+  width: 11px;
+  height: 11px;
+  border: 3px solid var(--accent);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 42%, transparent);
+  will-change: transform, opacity;
+}
+
+.dot-pet-bench-label {
+  padding: 5px 7px;
+  border: 1px solid var(--accent);
+  background: var(--bg);
+  color: var(--accent);
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  line-height: 1;
+  text-transform: uppercase;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+.dot-pet-zero-active {
+  transform-origin: 50% 62%;
+  will-change: transform;
+}
+
+@media (max-width: 599px) {
+  .dot-pet-toggle { font-size: 8px; }
+}

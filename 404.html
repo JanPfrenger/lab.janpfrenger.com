@@ -10,13 +10,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/style.css?v=20260722i">
+    <link rel="stylesheet" href="/pet.css?v=20260722b">
 
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="shortcut icon" href="/favicon.ico">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 </head>
-<body class="error-page">
+<body class="error-page" data-site="lab" data-scene="404">
     <div class="error-canvas" id="errorCanvas" data-error-palette="acid" data-error-layout="split">
         <header class="error-nav">
             <a href="/" class="error-brand" aria-label="Jan Pfrenger Lab, home">
@@ -36,7 +37,7 @@
             </div>
 
             <div class="error-code" aria-hidden="true">
-                <span>4</span><span class="error-zero">0</span><span>4</span>
+                <span>4</span><span class="error-zero" data-pet-404>0</span><span>4</span>
             </div>
 
             <section class="error-message" aria-live="polite" aria-atomic="true">
@@ -87,5 +88,6 @@ nothing.</h1>
         </footer>
     </div>
     <script src="/script.js?v=20260722e"></script>
+    <script src="/pet.js?v=20260722b"></script>
 </body>
 </html>
