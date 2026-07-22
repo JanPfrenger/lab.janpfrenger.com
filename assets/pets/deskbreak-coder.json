@@ -1,0 +1,7 @@
+{
+  "id": "deskbreak-coder",
+  "displayName": "DeskBreak Coder",
+  "description": "A calm hoodie coder companion for DeskBreak states.",
+  "spritesheetPath": "spritesheet.webp",
+  "kind": "person"
+}
