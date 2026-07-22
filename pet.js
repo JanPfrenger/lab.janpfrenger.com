@@ -73,7 +73,7 @@
         followPointerAfterExit: true,
         reducedMotion: "hide",
         edgePadding: 52,
-        label: "Dot, a tiny animated site robot",
+        label: "Dot, a tiny seated coding companion",
         ...options,
       };
 
@@ -293,12 +293,17 @@
     }
 
     onPointerMove(event) {
-      const dx = event.clientX - this.pointer.x;
-      const dy = event.clientY - this.pointer.y;
-      this.pointer.speed = Math.hypot(dx, dy);
+      const firstMove = !this.pointer.seen;
+      const dx = firstMove ? 0 : event.clientX - this.pointer.x;
+      const dy = firstMove ? 0 : event.clientY - this.pointer.y;
+      this.pointer.speed = firstMove ? 0 : Math.hypot(dx, dy);
       this.pointer.x = event.clientX;
       this.pointer.y = event.clientY;
       this.pointer.seen = true;
+      if (firstMove && this.mode === "dot") {
+        const offset = this.options.followOffset;
+        this.teleport(event.clientX + offset.x, event.clientY + offset.y);
+      }
       this.lastInput = now();
       if (!this.running && !this.disabled) this.start();
 
@@ -579,11 +584,11 @@
       const offset = this.options.followOffset;
       const targetX = this.pointer.x + offset.x;
       const targetY = this.pointer.y + offset.y;
-      actor.x = damp(actor.x, targetX, 25, dt);
-      actor.y = damp(actor.y, targetY, 25, dt);
+      actor.x = damp(actor.x, targetX, 14, dt);
+      actor.y = damp(actor.y, targetY, 14, dt);
       actor.morph = damp(actor.morph, 0, 18, dt);
       actor.opacity = damp(actor.opacity, this.pointer.seen ? 1 : 0, 14, dt);
-      actor.squash = damp(actor.squash, clamp(this.pointer.speed / 140, 0, 0.28), 12, dt);
+      actor.squash = 0;
 
       if (this.options.autoEmerge && this.pointer.seen && !this.autoEmerged &&
           time - this.lastInput > this.options.idleDelay) {
@@ -774,7 +779,7 @@
             ? clamp(position.x, 24, this.width - 24)
             : clamp(target.x + side * Math.max(58, target.width * 0.4), 52, this.width - 52);
           const desiredY = Number.isFinite(position?.y)
-            ? clamp(position.y, 58, this.height - 54)
+            ? clamp(position.y, 68, scene.options.ledge ? this.height + 4 : this.height - 54)
             : clamp(target.y + Math.max(36, target.height * 0.2), 58, this.height - 54);
           actor.x = damp(actor.x, desiredX, t < 0.34 ? 2.4 : 5.5, dt);
           actor.y = damp(actor.y, desiredY, t < 0.34 ? 2.4 : 5.5, dt);
@@ -783,23 +788,37 @@
         }
         case "desk": {
           const deskX = clamp(target.x, 62, this.width - 62);
-          const deskY = clamp(target.y, 76, this.height - 42);
-          if (t < 0.14) {
-            const enter = easeOutBack(invLerp(0, 0.14, t), 0.75);
+          const deskY = clamp(target.y, 68, this.height + 4);
+          if (t < 0.16) {
+            const enter = easeOutBack(invLerp(0, 0.16, t), 0.65);
             actor.x = lerp(scene.fromX, deskX, enter);
-            actor.y = lerp(scene.fromY, deskY, enter) - Math.sin(enter * Math.PI) * 18;
-          } else if (t < 0.88) {
+            actor.y = lerp(scene.fromY, deskY, enter) - Math.sin(enter * Math.PI) * 11;
+          } else if (t < 0.9) {
             actor.x = damp(actor.x, deskX, 10, dt);
             actor.y = damp(actor.y, deskY, 10, dt);
-            actor.squash = Math.sin(time * 0.004) * 0.018;
+            actor.squash = 0;
           } else {
             const leave = easeInOutCubic(invLerp(0.88, 1, t));
-            actor.x = deskX;
-            actor.y = lerp(deskY, this.height + 78, leave);
+            const exitX = deskX < this.width / 2 ? -82 : this.width + 82;
+            actor.x = lerp(deskX, exitX, leave);
+            actor.y = deskY - Math.sin(leave * Math.PI) * 10;
           }
           break;
         }
         case "text-repair": {
+          const position = scene.options.position;
+          if (Number.isFinite(position?.x) && Number.isFinite(position?.y)) {
+            actor.x = damp(actor.x, clamp(position.x, 56, this.width - 56), t < 0.18 ? 3.6 : 9, dt);
+            actor.y = damp(actor.y, clamp(position.y, 68, this.height + 4), t < 0.18 ? 3.6 : 9, dt);
+            actor.heading = target.x > actor.x ? 1 : -1;
+            if (t > 0.69 && !scene.placed) {
+              scene.placed = true;
+              this.burst(target.x, target.y, this.palette.accent, 12, 1.15);
+              if (typeof scene.options.onPlace === "function") scene.options.onPlace(target.element || target);
+              this.emit("place", { name: scene.name, target: target.element || target, glyph: scene.options.glyph || "o" });
+            }
+            break;
+          }
           const dropX = clamp(scene.options.dropX || target.x + 72, 58, this.width - 58);
           const dropY = clamp(scene.options.dropY || target.y + target.height + 74, 82, this.height - 64);
           const approachX = clamp(dropX + 62, 60, this.width - 58);
@@ -842,22 +861,16 @@
         case "repair-404": {
           const side = target.x > this.width / 2 ? -1 : 1;
           const workX = clamp(target.x + side * Math.min(88, Math.max(54, target.width * 0.24)), 56, this.width - 56);
-          const workY = clamp(target.y + Math.min(52, target.height * 0.24), 62, this.height - 58);
+          const workY = clamp(target.y + Math.min(52, target.height * 0.24), 68, this.height + 4);
           if (t < 0.2) {
             const enter = easeOutBack(invLerp(0, 0.2, t), 0.8);
             actor.x = lerp(scene.fromX, workX, enter);
             actor.y = lerp(scene.fromY, workY, enter) - Math.sin(enter * Math.PI) * 22;
-          } else if (t < 0.68) {
+          } else {
             actor.x = damp(actor.x, workX, 8, dt);
             actor.y = damp(actor.y, workY, 8, dt);
             actor.heading = target.x > actor.x ? 1 : -1;
-            actor.squash = Math.sin(t * Math.PI * 12) * 0.07;
-          } else {
-            const panic = easeInOutCubic(invLerp(0.68, 1, t));
-            const panicX = side < 0 ? 42 : this.width - 42;
-            actor.x = lerp(workX, panicX, panic);
-            actor.y = workY + Math.sin(panic * Math.PI * 12) * 7;
-            actor.squash = Math.sin(panic * Math.PI * 18) * 0.1;
+            actor.squash = 0;
           }
           if (t > 0.26 && t < 0.68 && Math.random() < dt * 17) {
             this.burst(target.x + randomBetween(-24, 24), target.y + randomBetween(-16, 16), this.palette.accent, 1, 0.75);
@@ -995,19 +1008,22 @@
       const sceneSpin = this.scene && this.scene.name === "spin"
         ? easeInOutCubic(clamp((time - this.scene.startedAt) / this.scene.duration)) * TAU * 2
         : 0;
-      const bob = actor.morph > 0.5 && !(this.scene && this.scene.name === "sleep")
-        ? Math.sin(time * 0.004 + actor.x * 0.01) * 1.5
-        : 0;
-      const movingSquash = clamp(Math.abs(actor.vx) / 900, 0, 0.12);
+      const bob = 0;
+      const cursorSeed = this.mode === "dot" && actor.morph < 0.001;
+      const movingSquash = cursorSeed ? 0 : clamp(Math.abs(actor.vx) / 900, 0, 0.12);
 
       ctx.save();
       ctx.globalAlpha = actor.opacity;
       ctx.translate(actor.x, actor.y - clickHop + bob);
       ctx.rotate(sceneSpin);
-      ctx.scale(
-        actor.heading * baseScale * (1 + actor.squash * 0.22 + movingSquash),
-        baseScale * (1 - actor.squash * 0.28 - clickSquash),
-      );
+      if (cursorSeed) {
+        ctx.scale(baseScale, baseScale);
+      } else {
+        ctx.scale(
+          actor.heading * baseScale * (1 + actor.squash * 0.22 + movingSquash),
+          baseScale * (1 - actor.squash * 0.28 - clickSquash),
+        );
+      }
       this.drawActor(ctx, time);
       ctx.restore();
       if (this.debugVisible) this.drawDebug(ctx);
@@ -1015,12 +1031,9 @@
 
     drawActionLines(ctx, time) {
       const actor = this.actor;
-      const sceneT = this.scene ? clamp((time - this.scene.startedAt) / this.scene.duration) : 0;
       const fast = this.scene && (
         this.scene.name === "panic" ||
-        this.scene.name === "spin" ||
-        (this.scene.name === "text-repair" && sceneT > 0.22 && sceneT < 0.64) ||
-        (this.scene.name === "repair-404" && sceneT > 0.68)
+        this.scene.name === "spin"
       );
       if (!fast) return;
       ctx.save();
@@ -1058,22 +1071,11 @@
 
     drawDot(ctx, time, alpha) {
       if (alpha <= 0) return;
-      const speedStretch = clamp(this.pointer.speed / 180, 0, 0.28);
       ctx.save();
-      ctx.globalAlpha *= alpha;
-      ctx.rotate(Math.atan2(this.actor.vy, this.actor.vx || 0.01));
-      ctx.scale(1 + speedStretch, 1 - speedStretch * 0.42);
-      ctx.shadowColor = "rgba(0, 0, 0, 0.12)";
-      ctx.shadowBlur = 7;
-      ctx.fillStyle = this.palette.steel;
+      ctx.globalAlpha *= alpha * 0.18;
+      ctx.fillStyle = this.palette.ink;
       ctx.beginPath();
       ctx.arc(0, 0, 12, 0, TAU);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      ctx.globalAlpha *= 0.42;
-      ctx.fillStyle = this.palette.paper;
-      ctx.beginPath();
-      ctx.arc(-3.5, -4, 3, 0, TAU);
       ctx.fill();
       ctx.restore();
     }
@@ -1096,153 +1098,109 @@
     drawRobot(ctx, time, alpha) {
       const scene = this.scene;
       const sceneT = scene ? clamp((time - scene.startedAt) / scene.duration) : 0;
-      const bodyWidth = 52;
-      const bodyHeight = 47;
       const sleeping = scene && scene.name === "sleep";
-      const panic = scene && (scene.name === "panic" || (scene.name === "repair-404" && sceneT > 0.7));
-      const carrying = scene && scene.name === "text-repair" && sceneT > 0.2 && sceneT < 0.69 && !scene.placed;
+      const panic = scene && scene.name === "panic";
       const repairing = scene && scene.name === "repair-404" && sceneT > 0.24 && sceneT < 0.72;
       const inspecting = scene && scene.name === "inspect";
-      const desk = scene && scene.name === "desk";
       const waving = scene && (
         scene.name === "wave" ||
         scene.name === "peek" ||
-        (scene.name === "home-intro" && sceneT > 0.34 && sceneT < 0.67)
+        (scene.name === "home-intro" && sceneT > 0.34 && sceneT < 0.67) ||
+        (scene.name === "desk" && sceneT > 0.6 && sceneT < 0.76)
       );
-      const celebrating = scene && scene.name === "celebrate";
+      const typing = !sleeping && !panic && !waving;
+      const cream = "#f2eee3";
+      const charcoal = "#171914";
+      const breathe = sleeping ? 0 : Math.sin(time * 0.0026) * 0.65;
+      const lean = panic ? Math.sin(time * 0.04) * 0.055 : (inspecting ? -0.035 : 0);
 
       ctx.save();
       ctx.globalAlpha *= alpha;
+      ctx.rotate(lean);
+
+      this.drawDanglingLegs(ctx, time, { cream, charcoal, panic });
 
       ctx.save();
-      ctx.globalAlpha *= 0.2;
-      ctx.fillStyle = this.palette.ink;
-      ctx.beginPath();
-      ctx.ellipse(0, 28, 31, 7, 0, 0, TAU);
+      ctx.translate(0, breathe * 0.35);
+      roundedRect(ctx, -22, -43, 44, 42, 14);
+      ctx.fillStyle = charcoal;
       ctx.fill();
-      ctx.restore();
-
-      this.drawLegs(ctx, time, bodyWidth, bodyHeight);
-      this.drawArm(ctx, -1, time, sceneT, { waving, carrying, repairing, inspecting, celebrating, desk });
-      this.drawArm(ctx, 1, time, sceneT, { waving, carrying, repairing, inspecting, celebrating, desk });
-
-      ctx.save();
-      const bodyLean = panic ? Math.sin(time * 0.04) * 0.05 : 0;
-      ctx.rotate(bodyLean);
-      pebblePath(ctx, bodyWidth, bodyHeight);
-      ctx.fillStyle = this.palette.paper;
-      ctx.fill();
-      ctx.lineWidth = 2;
       ctx.strokeStyle = this.palette.ink;
+      ctx.lineWidth = 1.6;
       ctx.stroke();
 
-      ctx.save();
-      ctx.globalAlpha *= 0.28;
-      ctx.strokeStyle = this.palette.steel;
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = this.palette.accent;
+      ctx.lineWidth = 1.3;
       ctx.beginPath();
-      ctx.arc(-4, 1, 20, -1.55, 1.35);
+      ctx.arc(0, -35, 13, 0.18, Math.PI - 0.18);
       ctx.stroke();
+
+      this.drawCompanionFace(ctx, time, { cream, charcoal, sleeping, panic, inspecting });
+      this.drawCompanionArm(ctx, -1, time, { cream, charcoal, typing, waving: false });
+      this.drawCompanionArm(ctx, 1, time, { cream, charcoal, typing, waving });
       ctx.restore();
 
-      roundedRect(ctx, -19, -14, 38, 24, 9);
-      ctx.fillStyle = this.palette.glass;
-      ctx.fill();
+      this.drawLaptop(ctx, time, sceneT);
 
-      ctx.fillStyle = this.palette.accent;
-      roundedRect(ctx, -18, 15, 24, 4, 2);
-      ctx.fill();
-      ctx.fillStyle = this.palette.ink;
-      ctx.globalAlpha *= 0.42;
-      roundedRect(ctx, 9, 15, 9, 4, 2);
-      ctx.fill();
-      ctx.globalAlpha /= 0.42;
-
-      ctx.strokeStyle = this.palette.ink;
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      ctx.moveTo(0, -bodyHeight / 2);
-      ctx.lineTo(3, -32);
-      ctx.stroke();
-      ctx.fillStyle = this.palette.accent;
-      ctx.beginPath();
-      ctx.arc(4, -35, 3.2, 0, TAU);
-      ctx.fill();
-
-      this.drawEye(ctx, time, { sleeping, panic, inspecting, repairing, celebrating, desk });
-      ctx.restore();
-
-      if (carrying && scene.options.renderGlyph !== false) this.drawHeldGlyph(ctx, scene.options.glyph || "o", sceneT);
-      if (repairing) this.drawRepairTool(ctx, time);
       if (sleeping) this.drawSleepMarks(ctx, time);
       if (inspecting) this.drawScanner(ctx, time, sceneT);
-      if (desk) this.drawLaptop(ctx, time, sceneT);
+      if (repairing) this.drawRepairPatch(ctx, time);
       if (panic) this.drawPanicMark(ctx, time);
       ctx.restore();
     }
 
-    drawLegs(ctx, time, bodyWidth, bodyHeight) {
-      const hipY = bodyHeight / 2 - 2;
-      const stride = clamp(Math.abs(this.actor.vx) / 260, 0, 1);
+    drawDanglingLegs(ctx, time, colors) {
+      const still = this.scene && (this.scene.name === "sleep" || this.scene.name === "repair-404");
       for (const side of [-1, 1]) {
-        const step = Math.sin(time * 0.018 + side * Math.PI / 2) * 3.5 * stride;
-        const legX = side * 13;
+        const swing = still ? 0 : Math.sin(time * 0.0032 + side * 1.4) * 2.6;
+        const kick = colors.panic ? Math.sin(time * 0.024 + side) * 6 : 0;
         ctx.save();
-        ctx.strokeStyle = this.palette.ink;
-        ctx.lineWidth = 2.2;
+        ctx.strokeStyle = colors.charcoal;
+        ctx.lineWidth = 6;
         ctx.lineCap = "round";
+        ctx.lineJoin = "round";
         ctx.beginPath();
-        ctx.moveTo(legX, hipY);
-        ctx.lineTo(legX - 3, hipY + 5);
-        ctx.lineTo(legX + 3, hipY + 10);
-        ctx.lineTo(legX + step, hipY + 16);
+        ctx.moveTo(side * 9, -3);
+        ctx.lineTo(side * 10, 10);
+        ctx.lineTo(side * (12 + swing) + kick, 23);
         ctx.stroke();
-        ctx.fillStyle = this.palette.paper;
+
+        ctx.fillStyle = colors.cream;
         ctx.strokeStyle = this.palette.ink;
-        ctx.lineWidth = 1.8;
+        ctx.lineWidth = 1.3;
         ctx.beginPath();
-        ctx.ellipse(legX + step + side * 2, hipY + 18, 8, 3.7, side * 0.08, 0, TAU);
+        ctx.ellipse(side * (15 + swing) + kick, 25, 7, 3.6, side * 0.08, 0, TAU);
         ctx.fill();
         ctx.stroke();
-        ctx.fillStyle = this.palette.accent;
-        ctx.beginPath();
-        ctx.arc(legX, hipY + 1, 2.3, 0, TAU);
-        ctx.fill();
+        if (side === 1) {
+          ctx.strokeStyle = this.palette.accent;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(11 + swing + kick, 21);
+          ctx.lineTo(16 + swing + kick, 23);
+          ctx.stroke();
+        }
         ctx.restore();
       }
     }
 
-    drawArm(ctx, side, time, sceneT, flags) {
-      const shoulder = { x: side * 27, y: -2 };
-      let elbow = { x: side * 38, y: 7 };
-      let hand = { x: side * 42, y: 18 };
+    drawCompanionArm(ctx, side, time, colors) {
+      const shoulder = { x: side * 16, y: -29 };
+      let elbow = { x: side * 19, y: -20 };
+      let hand = {
+        x: side * 9,
+        y: -21 + (colors.typing ? Math.abs(Math.sin(time * 0.018 + side * 1.8)) * 2 : 0),
+      };
 
-      if (flags.waving && side === 1) {
-        const wave = Math.sin(time * 0.015) * 7;
-        elbow = { x: 35, y: -17 };
-        hand = { x: 37 + wave, y: -34 };
-      } else if (flags.carrying) {
-        elbow = { x: side * 32, y: 14 };
-        hand = { x: side * 12, y: 27 };
-      } else if (flags.repairing) {
-        const tap = Math.sin(time * 0.036) * 8;
-        elbow = { x: side * 36, y: 2 };
-        hand = { x: side * (43 + tap), y: -8 + tap * 0.35 };
-      } else if (flags.inspecting) {
-        elbow = { x: side * 34, y: 10 };
-        hand = { x: side * 29, y: 24 };
-      } else if (flags.desk) {
-        const type = Math.sin(time * 0.026 + side * 1.7) * 2.4;
-        elbow = { x: side * 30, y: 8 };
-        hand = { x: side * 16, y: 27 + type };
-      } else if (flags.celebrating) {
-        elbow = { x: side * 37, y: -14 };
-        hand = { x: side * (39 + Math.sin(time * 0.02 + side) * 4), y: -30 };
+      if (colors.waving && side === 1) {
+        const wave = Math.sin(time * 0.015) * 0.24;
+        elbow = { x: 24, y: -42 };
+        hand = { x: 28 + Math.sin(wave) * 5, y: -56 + Math.cos(wave) * 2 };
       }
 
       ctx.save();
-      ctx.strokeStyle = this.palette.ink;
-      ctx.lineWidth = 4.8;
+      ctx.strokeStyle = colors.charcoal;
+      ctx.lineWidth = 6.5;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
       ctx.beginPath();
@@ -1250,51 +1208,68 @@
       ctx.lineTo(elbow.x, elbow.y);
       ctx.lineTo(hand.x, hand.y);
       ctx.stroke();
-      ctx.fillStyle = this.palette.paper;
-      ctx.strokeStyle = this.palette.ink;
-      ctx.lineWidth = 1.8;
+      ctx.fillStyle = colors.cream;
+      ctx.strokeStyle = colors.charcoal;
+      ctx.lineWidth = 1.2;
       ctx.beginPath();
-      ctx.arc(elbow.x, elbow.y, 4.1, 0, TAU);
+      ctx.arc(hand.x, hand.y, colors.waving ? 4.8 : 4.1, 0, TAU);
       ctx.fill();
       ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(hand.x, hand.y, 4.4, 0, TAU);
-      ctx.fill();
-      ctx.stroke();
+      if (colors.waving) {
+        ctx.strokeStyle = colors.cream;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(hand.x - 1.5, hand.y - 3.5);
+        ctx.lineTo(hand.x - 2, hand.y - 7.5);
+        ctx.moveTo(hand.x + 1, hand.y - 3.6);
+        ctx.lineTo(hand.x + 2, hand.y - 7.2);
+        ctx.stroke();
+      }
       ctx.restore();
     }
 
-    drawEye(ctx, time, expression) {
+    drawCompanionFace(ctx, time, expression) {
+      const headY = -48 + (expression.sleeping ? 4 : 0);
       const blink = expression.sleeping ? 0.08 : this.actor.blink;
-      const eyeWidth = expression.panic ? 10 : 9;
-      const eyeHeight = Math.max(0.8, (expression.panic ? 8.6 : 6.8) * blink);
-      const gazeX = this.actor.gazeX * 3;
-      const gazeY = expression.desk ? 2.8 : this.actor.gazeY * 2;
+      const gazeX = clamp(this.actor.gazeX * 1.1, -1.2, 1.2);
+      const gazeY = expression.inspecting ? 0.8 : clamp(this.actor.gazeY * 0.7, -0.8, 0.8);
+
       ctx.save();
-      ctx.translate(0, -3);
-      ctx.fillStyle = this.palette.accent;
+      ctx.translate(expression.sleeping ? 3 : 0, 0);
+      ctx.fillStyle = expression.cream;
+      ctx.strokeStyle = expression.charcoal;
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.ellipse(0, 0, eyeWidth, eyeHeight, expression.inspecting ? -0.08 : 0, 0, TAU);
+      ctx.ellipse(0, headY, 15.5, 14.2, expression.sleeping ? 0.08 : -0.03, 0, TAU);
       ctx.fill();
-      if (blink > 0.2) {
-        ctx.fillStyle = this.palette.ink;
+      ctx.stroke();
+
+      ctx.fillStyle = expression.charcoal;
+      ctx.beginPath();
+      ctx.moveTo(-14.5, headY - 2);
+      ctx.bezierCurveTo(-14, headY - 13, -5, headY - 17, 4, headY - 14);
+      ctx.bezierCurveTo(10, headY - 12, 14, headY - 8, 14.5, headY - 3);
+      ctx.bezierCurveTo(8, headY - 7, 3, headY - 6, -2, headY - 8);
+      ctx.bezierCurveTo(-5, headY - 5, -10, headY - 4, -14.5, headY - 2);
+      ctx.fill();
+
+      ctx.fillStyle = expression.charcoal;
+      const eyeHeight = Math.max(0.45, (expression.panic ? 2.3 : 1.45) * blink);
+      for (const side of [-1, 1]) {
         ctx.beginPath();
-        ctx.arc(gazeX, gazeY, expression.panic ? 3 : 2.6, 0, TAU);
-        ctx.fill();
-        ctx.fillStyle = this.palette.paper;
-        ctx.globalAlpha *= 0.8;
-        ctx.beginPath();
-        ctx.arc(gazeX - 0.9, gazeY - 0.9, 0.8, 0, TAU);
+        ctx.ellipse(side * 4.5 + gazeX, headY + gazeY, expression.panic ? 1.9 : 1.35, eyeHeight, 0, 0, TAU);
         ctx.fill();
       }
-      ctx.restore();
-      if (expression.celebrating) {
-        ctx.strokeStyle = this.palette.accent;
-        ctx.lineWidth = 1.2;
+
+      if (!expression.sleeping) {
+        ctx.strokeStyle = expression.charcoal;
+        ctx.lineWidth = 1;
+        ctx.lineCap = "round";
         ctx.beginPath();
-        ctx.arc(0, 5, 4, 0.15, Math.PI - 0.15);
+        ctx.arc(0.5, headY + 3.4, 3.2, 0.25, Math.PI - 0.2);
         ctx.stroke();
       }
+      ctx.restore();
     }
 
     drawPanicMark(ctx, time) {
@@ -1317,45 +1292,38 @@
     }
 
     drawLaptop(ctx, time, sceneT) {
-      const screenGlow = 0.55 + Math.sin(time * 0.005) * 0.12;
+      const logoPulse = 0.82 + Math.sin(time * 0.005) * 0.16;
       ctx.save();
-      ctx.translate(0, 31);
-      ctx.fillStyle = this.palette.ink;
-      ctx.strokeStyle = this.palette.paper;
-      ctx.lineWidth = 1.5;
+      ctx.fillStyle = "#11130f";
+      ctx.strokeStyle = this.palette.ink;
+      ctx.lineWidth = 1.4;
       ctx.beginPath();
-      ctx.moveTo(-24, -19);
-      ctx.lineTo(24, -19);
-      ctx.lineTo(20, 8);
-      ctx.lineTo(-20, 8);
+      ctx.moveTo(-24, -30);
+      ctx.lineTo(24, -30);
+      ctx.lineTo(20, -3);
+      ctx.lineTo(-20, -3);
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
 
       ctx.save();
-      ctx.globalAlpha *= screenGlow;
+      ctx.globalAlpha *= logoPulse;
       ctx.fillStyle = this.palette.accent;
-      roundedRect(ctx, -14, -11, 28, 2.5, 1.25);
-      ctx.fill();
-      roundedRect(ctx, -14, -5, 18 + Math.sin(time * 0.003) * 4, 2.5, 1.25);
+      roundedRect(ctx, -5, -19, 10, 7, 2.5);
       ctx.fill();
       ctx.restore();
 
-      ctx.fillStyle = this.palette.paper;
-      ctx.strokeStyle = this.palette.ink;
+      ctx.fillStyle = "#f2eee3";
+      ctx.strokeStyle = "#11130f";
+      ctx.lineWidth = 1.2;
       ctx.beginPath();
-      ctx.moveTo(-27, 8);
-      ctx.lineTo(27, 8);
-      ctx.lineTo(22, 13);
-      ctx.lineTo(-22, 13);
+      ctx.moveTo(-27, -3);
+      ctx.lineTo(27, -3);
+      ctx.lineTo(22, 1.5);
+      ctx.lineTo(-22, 1.5);
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
-
-      ctx.fillStyle = this.palette.accent;
-      ctx.beginPath();
-      ctx.arc(0, -1, 2.2 + Math.sin(sceneT * Math.PI * 8) * 0.3, 0, TAU);
-      ctx.fill();
       ctx.restore();
     }
 
@@ -1375,22 +1343,21 @@
       ctx.restore();
     }
 
-    drawRepairTool(ctx, time) {
+    drawRepairPatch(ctx, time) {
       ctx.save();
-      ctx.translate(41, -10);
-      ctx.rotate(Math.sin(time * 0.036) * 0.5);
-      ctx.strokeStyle = this.palette.paper;
-      ctx.lineWidth = 3.2;
-      ctx.lineCap = "round";
+      ctx.translate(31, -9);
+      ctx.rotate(Math.sin(time * 0.018) * 0.12);
+      ctx.fillStyle = this.palette.accent;
+      ctx.strokeStyle = "#11130f";
+      ctx.lineWidth = 1.3;
       ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(13, -12);
+      ctx.arc(0, 0, 5.2, 0, TAU);
+      ctx.fill();
       ctx.stroke();
-      ctx.strokeStyle = this.palette.accent;
-      ctx.lineWidth = 2;
+      ctx.fillStyle = "#11130f";
       ctx.beginPath();
-      ctx.arc(15, -14, 5, 0.4, Math.PI * 1.6);
-      ctx.stroke();
+      ctx.arc(0, 0, 1.4, 0, TAU);
+      ctx.fill();
       ctx.restore();
     }
 
@@ -1658,17 +1625,88 @@
       rect.top < global.innerHeight - padding && rect.left < global.innerWidth - padding;
   }
 
+  function seatIsClear(point, source) {
+    const scale = global.innerWidth < 600 ? 0.72 : (global.innerWidth < 900 ? 0.86 : 1);
+    const footprint = {
+      left: point.x - 38 * scale,
+      right: point.x + 38 * scale,
+      top: point.y - 64 * scale,
+      bottom: point.y + 28 * scale,
+    };
+    const blockers = document.querySelectorAll(
+      "h1, h2, h3, p, img, button, .button, .logo, .nav-links, .directory-card-top, .directory-card-foot"
+    );
+    return !Array.from(blockers).some((element) => {
+      if (!element.isConnected || element === source) return false;
+      const rect = element.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0 &&
+        footprint.right > rect.left && footprint.left < rect.right &&
+        footprint.bottom > rect.top && footprint.top < rect.bottom;
+    });
+  }
+
+  function pointOnLedge(candidate) {
+    const element = typeof candidate.selector === "string"
+      ? document.querySelector(candidate.selector)
+      : candidate.element;
+    if (!element) return null;
+    const rect = element.getBoundingClientRect();
+    const edge = candidate.edge || "bottom";
+    const y = edge === "top" ? rect.top : rect.bottom;
+    if (rect.width < 90 || y < 70 || y > global.innerHeight + 3) return null;
+
+    const pad = global.innerWidth < 600 ? 34 : 56;
+    const positions = [];
+    if (candidate.grid) {
+      const children = Array.from(element.children).filter((child) => child.getBoundingClientRect().width > 0);
+      if (children.length > 1) {
+        const first = children[0].getBoundingClientRect();
+        const second = children[1].getBoundingClientRect();
+        if (Math.abs(first.top - second.top) < 3) positions.push(first.right);
+      }
+    }
+    const ratios = candidate.ratios || [candidate.ratio || 0.7, 0.55, 0.82, 0.38];
+    ratios.forEach((ratio) => positions.push(rect.left + rect.width * ratio));
+
+    for (const rawX of positions) {
+      const point = {
+        x: Math.min(global.innerWidth - pad, Math.max(pad, rawX)),
+        y,
+        element,
+        edge,
+      };
+      if (seatIsClear(point, element)) return point;
+    }
+    return null;
+  }
+
+  function findSeatLedge(preferred = []) {
+    const defaults = route === "404" ? [] : [
+      { selector: ".home-hero", edge: "bottom", ratios: [0.63, 0.54, 0.76] },
+      { selector: ".directory-hero", edge: "bottom", ratios: [0.52, 0.64, 0.38, 0.78] },
+      { selector: ".interior-hero", edge: "bottom", ratios: [0.84, 0.72, 0.58] },
+      { selector: ".header", edge: "bottom", ratios: [0.54, 0.46, 0.62] },
+      { selector: ".project-grid", edge: "top", grid: true },
+      { selector: ".network-grid", edge: "top", grid: true },
+      { selector: ".directory-grid", edge: "top", grid: true },
+      { selector: ".interior-section", edge: "bottom", ratios: [0.82, 0.68, 0.46] },
+      { selector: ".cv-section", edge: "bottom", ratios: [0.82, 0.68, 0.46] },
+      { selector: ".interior-updated", edge: "bottom", ratios: [0.78, 0.58] },
+      { selector: "footer", edge: "top", ratios: [0.72, 0.52, 0.86] },
+    ];
+    for (const candidate of [...preferred, ...defaults]) {
+      const point = pointOnLedge(candidate);
+      if (point) return point;
+    }
+    return null;
+  }
+
   function resetToCursor() {
     if (!engine) return;
     engine.scene = null;
     engine.pendingScene = null;
     document.documentElement.classList.remove("dot-pet-detached");
-    if (finePointer.matches && engine.pointer.seen) {
-      engine.teleport(engine.pointer.x, engine.pointer.y).summon({ as: "dot" });
-      engine.actor.opacity = 1;
-    } else {
-      engine.dismiss({ immediate: true });
-    }
+    engine.dismiss({ immediate: true });
   }
 
   function cancelCurrent(options = {}) {
@@ -1730,25 +1768,16 @@
     return true;
   }
 
-  function playDesk() {
-    if (!engine || isBusy() || peekCount >= 3 || !finePointer.matches || route === "404") return false;
-    const footer = document.querySelector("footer");
-    const footerRect = footer?.getBoundingClientRect();
-    const y = Math.max(100, Math.min(global.innerHeight - 54, footerRect && footerRect.top > 120 ? footerRect.top - 56 : global.innerHeight - 54));
-    const blockers = Array.from(document.querySelectorAll(
-      "a, button, h1, h2, h3, .eyebrow, .hero-lead, .directory-lead, .project-card, .error-message, .portrait-wrap"
-    ));
-    const candidates = Math.random() > 0.5 ? [global.innerWidth - 78, 78] : [78, global.innerWidth - 78];
-    const x = candidates.find((candidate) => !blockers.some((element) => {
-      const rect = element.getBoundingClientRect();
-      return candidate + 60 > rect.left && candidate - 60 < rect.right && y + 44 > rect.top && y - 74 < rect.bottom;
-    }));
-    if (!Number.isFinite(x)) return false;
+  function playDesk(options = {}) {
+    if (!engine || isBusy() || peekCount >= 3 || route === "404") return false;
+    const seat = options.seat || findSeatLedge(options.preferred || []);
+    if (!seat) return false;
 
     activeName = "desk";
     peekCount += 1;
-    primeRobot(x, global.innerHeight + 72);
-    engine.play("desk", { target: { x, y }, after: "hide" });
+    const startX = seat.x < global.innerWidth / 2 ? -74 : global.innerWidth + 74;
+    primeRobot(startX, seat.y);
+    engine.play("desk", { target: seat, ledge: true, after: "hide" });
     return true;
   }
 
@@ -1758,8 +1787,7 @@
     const delay = debugScene === "peek" ? 650 : (initial ? randomMs(25000, 40000) : randomMs(55000, 85000));
     later(() => {
       peekScheduled = false;
-      const deskTurn = debugScene !== "peek" && Math.random() < 0.34;
-      const played = deskTurn ? (playDesk() || playPeek()) : playPeek();
+      const played = debugScene === "peek" ? playPeek() : playDesk();
       if (!played) schedulePeek(false);
     }, delay);
   }
@@ -1770,26 +1798,18 @@
 
   function playMainIntro(attempt = 0) {
     if (!engine || primaryPlayed || route !== "home") return;
-    if (!finePointer.matches) {
-      primaryPlayed = true;
-      playPeek({ side: "right" });
-      return;
-    }
-    const ready = finePointer.matches && engine.pointer.seen && performance.now() - engine.lastInput > 3000 && !isBusy();
-    if (!ready) {
+    const seat = findSeatLedge([
+      { selector: ".home-hero", edge: "bottom", ratios: [0.63, 0.54, 0.76] },
+      { selector: ".header", edge: "bottom", ratios: [0.54, 0.46, 0.62] },
+    ]);
+    if (!seat || isBusy()) {
       if (attempt < 24) later(() => playMainIntro(attempt + 1), 750);
       else schedulePeek(true);
       return;
     }
 
     primaryPlayed = true;
-    activeName = "home-intro";
-    const hasRightPortrait = visibleEnough(document.querySelector(".portrait-wrap"), 0);
-    engine.play("home-intro", {
-      side: hasRightPortrait ? "left" : (engine.pointer.x < global.innerWidth / 2 ? "left" : "right"),
-      y: Math.max(132, Math.min(global.innerHeight - 86, engine.pointer.y)),
-      after: "fold",
-    });
+    playDesk({ seat });
   }
 
   function makeLetterClone(letter, rect) {
@@ -1821,15 +1841,19 @@
     const tail = document.querySelector("[data-pet-jobs-tail]");
     if (!letter || !tail) return;
     const rect = letter.getBoundingClientRect();
+    const seat = findSeatLedge([
+      { selector: ".directory-hero", edge: "bottom", ratios: [0.52, 0.64, 0.38, 0.78] },
+      { selector: ".directory-grid", edge: "top", grid: true },
+    ]);
 
-    if (isBusy() || !visibleEnough(letter, 54)) {
+    if (isBusy() || !visibleEnough(letter, 54) || !seat) {
       if (attempt < 28) later(() => playAppsRepair(attempt + 1), 900);
       return;
     }
 
     primaryPlayed = true;
     if (global.innerWidth < 820 || !finePointer.matches) {
-      playAppsNudge(letter, rect);
+      playAppsNudge(letter, rect, seat);
       return;
     }
 
@@ -1902,18 +1926,20 @@
     }
 
     activeCleanup = finish;
-    primeRobot(global.innerWidth + 48, dropY + 12);
+    primeRobot(global.innerWidth + 74, seat.y);
     engine.repairText(letter, {
       glyph: "o",
       dropX,
       dropY,
+      position: seat,
+      ledge: true,
       renderGlyph: false,
       onPlace: placeLetter,
       after: "hide",
     });
   }
 
-  function playAppsNudge(letter, rect) {
+  function playAppsNudge(letter, rect, seat) {
     activeName = "apps-nudge";
     const duration = 2500 * speed;
     let cleaned = false;
@@ -1936,10 +1962,8 @@
     }
 
     activeCleanup = finish;
-    const side = "right";
-    const y = Math.max(82, Math.min(global.innerHeight - 72, rect.top + rect.height / 2));
-    primeRobot(global.innerWidth + 46, y);
-    engine.play("peek", { side, y, short: true, hideAfter: true, after: "hide" });
+    primeRobot(global.innerWidth + 74, seat.y);
+    engine.play("desk", { target: seat, ledge: true, short: true, after: "hide" });
   }
 
   function playLabInspection(attempt = 0) {
@@ -1950,16 +1974,19 @@
       return;
     }
 
-    primaryPlayed = true;
     const rect = card.getBoundingClientRect();
-    if (global.innerWidth < 900 || !finePointer.matches) {
-      activeName = "lab-peek";
-      const y = Math.max(90, Math.min(global.innerHeight - 76, rect.top + 58));
-      primeRobot(global.innerWidth + 48, y);
-      engine.play("peek", { side: "right", y, short: true, hideAfter: true, after: "hide" });
+    const grid = card.parentElement;
+    const seat = findSeatLedge([
+      { element: grid, edge: "top", grid: true },
+      { element: card, edge: "top", ratios: [0.86, 0.72, 0.58] },
+      { selector: ".directory-hero", edge: "bottom", ratios: [0.52, 0.68, 0.38] },
+    ]);
+    if (!seat) {
+      if (attempt < 55) later(() => playLabInspection(attempt + 1), 1000);
       return;
     }
 
+    primaryPlayed = true;
     activeName = "lab-inspect";
     const duration = 5500 * speed;
     const washer = document.createElement("span");
@@ -2007,13 +2034,8 @@
     }
 
     activeCleanup = finish;
-    const gridRect = card.parentElement?.getBoundingClientRect() || rect;
-    const inspectionPoint = {
-      x: Math.min(global.innerWidth - 26, gridRect.right + 30),
-      y: Math.max(88, Math.min(global.innerHeight - 74, rect.top + rect.height * 0.34)),
-    };
-    primeRobot(global.innerWidth + 48, inspectionPoint.y);
-    engine.play("inspect", { target: card, position: inspectionPoint, after: "hide" });
+    primeRobot(global.innerWidth + 74, seat.y);
+    engine.play("inspect", { target: card, position: seat, ledge: true, after: "hide" });
   }
 
   function play404Repair(attempt = 0) {
@@ -2063,8 +2085,8 @@
   function runPrimary() {
     if (!engine || primaryPlayed) return;
     if (debugScene === "desk") {
-      primaryPlayed = true;
-      playDesk();
+      if (playDesk()) primaryPlayed = true;
+      else later(runPrimary, 900);
       return;
     }
     if (debugScene === "peek") {
@@ -2084,10 +2106,10 @@
       context: route === "404" ? "404" : site,
       autoEmerge: false,
       disableOnTouch: false,
-      followPointerAfterExit: finePointer.matches,
+      followPointerAfterExit: false,
       reducedMotion: "hide",
       robotLifetime: 2200,
-      scale: global.innerWidth < 600 ? 0.82 : 1,
+      scale: global.innerWidth < 600 ? 0.72 : (global.innerWidth < 900 ? 0.86 : 1),
     });
 
     if (!engine || !engine.ctx) {
@@ -2100,8 +2122,7 @@
     engine.sceneDuration = (name, options) => baseDuration(name, options) * speed;
     refreshPalette();
 
-    if (finePointer.matches) html.classList.add("dot-pet-active");
-    else engine.dismiss({ immediate: true });
+    engine.dismiss({ immediate: true });
 
     themeObserver = new MutationObserver(refreshPalette);
     themeObserver.observe(html, { attributes: true, attributeFilter: ["data-theme"] });
@@ -2138,7 +2159,7 @@
 
   global.addEventListener("resize", () => {
     lastResizeAt = performance.now();
-    if (engine) engine.options.scale = global.innerWidth < 600 ? 0.82 : 1;
+    if (engine) engine.options.scale = global.innerWidth < 600 ? 0.72 : (global.innerWidth < 900 ? 0.86 : 1);
     if (activeName) cancelCurrent();
   }, { passive: true });
 
@@ -2151,8 +2172,9 @@
     shuffle.addEventListener("click", () => {
       if (!engine) return;
       cancelCurrent({ scheduleAmbient: false });
+      primaryPlayed = false;
       later(() => {
-        if (!isBusy()) playPeek({ side: "right" });
+        if (!isBusy()) play404Repair();
       }, 650);
     });
   }

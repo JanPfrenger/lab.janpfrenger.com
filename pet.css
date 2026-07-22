@@ -63,24 +63,6 @@
   }
 }
 
-html.dot-pet-active .cursor-follower {
-  display: none !important;
-}
-
-html.dot-pet-active:not(.dot-pet-detached),
-html.dot-pet-active:not(.dot-pet-detached) a,
-html.dot-pet-active:not(.dot-pet-detached) button,
-html.dot-pet-active:not(.dot-pet-detached) [role="button"] {
-  cursor: none;
-}
-
-html.dot-pet-detached,
-html.dot-pet-detached a,
-html.dot-pet-detached button,
-html.dot-pet-detached [role="button"] {
-  cursor: revert !important;
-}
-
 .dot-pet-toggle {
   appearance: none;
   width: max-content;
