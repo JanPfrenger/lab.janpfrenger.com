@@ -1,18 +1,15 @@
-.page-jan-perch {
+.page-jan-host {
   position: relative;
-  min-height: clamp(178px, 15vw, 214px);
-  pointer-events: none;
 }
 
 .page-jan {
+  --jan-x: 0px;
   position: absolute;
-  right: clamp(20px, 4vw, 68px);
-  bottom: -1px;
   z-index: 3;
-  width: clamp(156px, 13vw, 190px);
+  width: clamp(150px, 12.5vw, 188px);
   aspect-ratio: 192 / 208;
   opacity: 0;
-  transform: translateY(1px) scale(.98);
+  transform: translate(var(--jan-x), 1px) scale(.98);
   transform-origin: 50% 100%;
   pointer-events: none;
   user-select: none;
@@ -23,7 +20,7 @@
 
 .page-jan.is-visible {
   opacity: .96;
-  transform: translateY(1px) scale(1);
+  transform: translate(var(--jan-x), 1px) scale(1);
 }
 
 .page-jan-sprite {
@@ -38,15 +35,58 @@
   will-change: background-position;
 }
 
+.contact-section > .page-jan {
+  right: clamp(8px, 3.4vw, 54px);
+  bottom: clamp(185px, 16vw, 230px);
+}
+
+.interior-contact > .page-jan {
+  right: clamp(14px, 3.5vw, 54px);
+  bottom: -1px;
+  width: clamp(116px, 10vw, 148px);
+}
+
+.directory-grid > .page-jan {
+  --jan-x: -50%;
+  left: 50%;
+  bottom: 100%;
+  width: clamp(132px, 11vw, 168px);
+}
+
 @media (max-width: 780px) {
-  .page-jan-perch {
-    min-height: clamp(104px, 31vw, 126px);
+  .page-jan {
+    filter: drop-shadow(0 7px 13px rgba(0, 0, 0, .14));
   }
 
-  .page-jan {
-    right: clamp(8px, 5vw, 22px);
-    width: clamp(82px, 23vw, 104px);
-    filter: drop-shadow(0 7px 13px rgba(0, 0, 0, .14));
+  .contact-section {
+    padding-bottom: 118px;
+  }
+
+  .contact-section > .page-jan {
+    right: 10px;
+    bottom: 200px;
+    width: clamp(82px, 23vw, 102px);
+  }
+
+  .interior-contact {
+    padding-bottom: 96px;
+  }
+
+  .interior-contact > .page-jan {
+    right: 12px;
+    bottom: -1px;
+    width: clamp(76px, 21vw, 92px);
+  }
+
+  .directory-grid.page-jan-host-directory {
+    margin-top: 96px;
+  }
+
+  .directory-grid > .page-jan {
+    --jan-x: 0px;
+    right: 8px;
+    left: auto;
+    width: clamp(78px, 22vw, 96px);
   }
 }
 

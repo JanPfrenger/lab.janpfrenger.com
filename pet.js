@@ -1,20 +1,20 @@
 /**
  * Jan, the DeskBreak Coder page companion.
  * Original artwork by SwainWongStudio, distributed through codex-pets.net.
- * Jan sits on the footer divider and scrolls with the page.
+ * Jan sits inside existing page sections and scrolls with the page.
  */
 (function pageJanCompanion(global) {
   "use strict";
 
   if (!document.body || document.body.classList.contains("error-page")) return;
 
-  const footer = document.querySelector("footer:not(.error-footer)");
-  if (!footer) return;
+  const contactHost = document.querySelector(".contact-section, .interior-contact");
+  const directoryHost = document.querySelector(".directory-grid");
+  const host = contactHost || directoryHost;
+  if (!host) return;
 
-  const perch = document.createElement("div");
-  perch.className = "page-jan-perch";
-  perch.setAttribute("aria-hidden", "true");
-  footer.parentNode.insertBefore(perch, footer);
+  host.classList.add("page-jan-host");
+  host.classList.add(contactHost ? "page-jan-host-contact" : "page-jan-host-directory");
 
   const reducedMotion = global.matchMedia("(prefers-reduced-motion: reduce)");
   const states = {
@@ -42,7 +42,7 @@
   const sprite = document.createElement("span");
   sprite.className = "page-jan-sprite";
   root.appendChild(sprite);
-  perch.appendChild(root);
+  host.appendChild(root);
 
   function randomBetween(minimum, maximum) {
     return minimum + Math.random() * (maximum - minimum);
