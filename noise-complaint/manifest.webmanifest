@@ -1,0 +1,27 @@
+{
+  "name": "Noise Enforcement Officer",
+  "short_name": "Noise Officer",
+  "description": "A local-only absurdity machine that refuses to permit silence.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0c0a",
+  "theme_color": "#0b0c0a",
+  "categories": ["entertainment", "utilities"],
+  "icons": [
+    {
+      "src": "./android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
