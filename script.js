@@ -25,6 +25,7 @@
 
     if (supportsFollower && !reduceMotion) {
         var cursorFollower = document.createElement('span');
+        var cursorTip = document.createElement('span');
         var followerHost = document.getElementById('errorCanvas') || document.body;
         var targetX = -100;
         var targetY = -100;
@@ -34,12 +35,15 @@
 
         cursorFollower.className = 'cursor-follower';
         cursorFollower.setAttribute('aria-hidden', 'true');
+        cursorTip.className = 'cursor-tip';
+        cursorTip.setAttribute('aria-hidden', 'true');
         followerHost.appendChild(cursorFollower);
+        followerHost.appendChild(cursorTip);
         html.classList.add('has-cursor-follower');
 
         function drawFollower() {
-            currentX += (targetX - currentX) * 0.2;
-            currentY += (targetY - currentY) * 0.2;
+            currentX += (targetX - currentX) * 0.16;
+            currentY += (targetY - currentY) * 0.16;
             cursorFollower.style.transform = 'translate3d(' + currentX + 'px, ' + currentY + 'px, 0) translate(-50%, -50%)';
 
             if (Math.abs(targetX - currentX) > 0.1 || Math.abs(targetY - currentY) > 0.1) {
@@ -58,28 +62,33 @@
                 currentX = event.clientX;
                 currentY = event.clientY;
                 cursorFollower.classList.add('is-visible');
+                cursorTip.classList.add('is-visible');
             }
 
             targetX = event.clientX;
             targetY = event.clientY;
+            cursorTip.style.transform = 'translate3d(' + targetX + 'px, ' + targetY + 'px, 0) translate(-50%, -50%)';
+            var interactiveTarget = event.target.closest && event.target.closest('a, button, summary, [role="button"]');
+            cursorFollower.classList.toggle('is-interactive', Boolean(interactiveTarget));
+            cursorTip.classList.toggle('is-interactive', Boolean(interactiveTarget));
             queueFollower();
         }, { passive: true });
 
-        document.addEventListener('pointerover', function (event) {
-            var target = event.target.closest && event.target.closest('a, button, [role="button"]');
-            cursorFollower.classList.toggle('is-interactive', Boolean(target));
-        });
-
         document.addEventListener('pointerdown', function () {
             cursorFollower.classList.add('is-pressed');
+            cursorTip.classList.add('is-pressed');
         });
 
         document.addEventListener('pointerup', function () {
             cursorFollower.classList.remove('is-pressed');
+            cursorTip.classList.remove('is-pressed');
         });
 
         document.addEventListener('mouseout', function (event) {
-            if (!event.relatedTarget) cursorFollower.classList.remove('is-visible');
+            if (!event.relatedTarget) {
+                cursorFollower.classList.remove('is-visible');
+                cursorTip.classList.remove('is-visible');
+            }
         });
     }
 

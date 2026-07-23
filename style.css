@@ -76,6 +76,7 @@ body.interior {
 html.has-cursor-follower,
 html.has-cursor-follower a,
 html.has-cursor-follower button,
+html.has-cursor-follower summary,
 html.has-cursor-follower [role="button"] { cursor: none; }
 
 .cursor-follower {
@@ -83,31 +84,40 @@ html.has-cursor-follower [role="button"] { cursor: none; }
     top: 0;
     left: 0;
     z-index: 10000;
-    width: 24px;
-    height: 24px;
+    width: 36px;
+    height: 36px;
+    border: 1.5px solid color-mix(in srgb, var(--text) 58%, transparent);
     border-radius: 50%;
-    background: color-mix(in srgb, var(--text) 18%, transparent);
+    background: transparent;
     opacity: 0;
     pointer-events: none;
     transform: translate3d(-100px, -100px, 0) translate(-50%, -50%);
-    transition: width .16s ease, height .16s ease, background-color .16s ease, opacity .16s ease;
+    transition: width .22s cubic-bezier(.16, 1, .3, 1), height .22s cubic-bezier(.16, 1, .3, 1), border-color .22s ease, background-color .22s ease, opacity .16s ease;
     will-change: transform;
 }
 .cursor-follower.is-visible { opacity: 1; }
 .cursor-follower.is-interactive {
-    width: 32px;
-    height: 32px;
-    background: color-mix(in srgb, var(--accent) 34%, transparent);
+    width: 48px;
+    height: 48px;
+    border-color: color-mix(in srgb, var(--accent) 84%, transparent);
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
-.cursor-follower.is-pressed { width: 13px; height: 13px; }
-.error-canvas .cursor-follower { background: color-mix(in srgb, var(--error-fg) 22%, transparent); }
-.error-canvas .cursor-follower.is-interactive { background: color-mix(in srgb, var(--error-accent) 42%, transparent); }
+.cursor-follower.is-pressed { width: 28px; height: 28px; }
+.cursor-tip { position: fixed; top: 0; left: 0; z-index: 10001; width: 5px; height: 5px; border-radius: 50%; background: var(--text); opacity: 0; pointer-events: none; transform: translate3d(-100px, -100px, 0) translate(-50%, -50%); transition: width .16s ease, height .16s ease, background-color .18s ease, opacity .16s ease; will-change: transform; }
+.cursor-tip.is-visible { opacity: 1; }
+.cursor-tip.is-interactive { background: var(--accent); }
+.cursor-tip.is-pressed { width: 7px; height: 7px; }
+.error-canvas .cursor-follower { border-color: color-mix(in srgb, var(--error-fg) 58%, transparent); }
+.error-canvas .cursor-follower.is-interactive { border-color: color-mix(in srgb, var(--error-accent) 84%, transparent); background: color-mix(in srgb, var(--error-accent) 8%, transparent); }
+.error-canvas .cursor-tip { background: var(--error-fg); }
+.error-canvas .cursor-tip.is-interactive { background: var(--error-accent); }
 
 @media (hover: none), (pointer: coarse), (prefers-reduced-motion: reduce) {
-    .cursor-follower { display: none; }
+    .cursor-follower, .cursor-tip { display: none; }
     html.has-cursor-follower,
     html.has-cursor-follower a,
     html.has-cursor-follower button,
+    html.has-cursor-follower summary,
     html.has-cursor-follower [role="button"] { cursor: auto; }
 }
 
