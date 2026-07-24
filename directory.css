@@ -112,6 +112,44 @@
 }
 .directory-card-foot span:last-child { color: var(--accent); font-weight: 700; }
 
+.hackops-project-card { min-height: 390px !important; }
+.hackops-project-body {
+    margin-top: auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(88px, 9vw, 116px);
+    align-items: end;
+    gap: clamp(22px, 3vw, 42px);
+}
+.hackops-project-body .project-card-copy { margin-top: 0; }
+.hackops-project-body .project-type a {
+    color: var(--accent);
+    text-decoration: none;
+    text-underline-offset: 3px;
+}
+.hackops-project-body .project-type a:hover,
+.hackops-project-body .project-type a:focus-visible { text-decoration: underline; }
+.project-card-main-link { color: inherit; text-decoration: none; }
+.project-card-main-link:hover,
+.project-card-main-link:focus-visible { color: var(--accent); }
+.hackops-poster-link {
+    display: block;
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line));
+    background: #f9d9f0;
+    box-shadow: 7px 7px 0 color-mix(in srgb, var(--accent) 16%, transparent);
+    transform: rotate(1.5deg);
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+.hackops-poster-link:hover,
+.hackops-poster-link:focus-visible {
+    box-shadow: 10px 10px 0 color-mix(in srgb, var(--accent) 24%, transparent);
+    transform: rotate(0) translate(-2px, -2px);
+}
+.hackops-poster-link img { width: 100%; height: auto; display: block; }
+.hackops-card-links { display: flex; align-items: center; gap: 14px; }
+.hackops-card-links a { color: var(--accent); font-weight: 700; text-decoration: none; }
+.hackops-card-links a:hover,
+.hackops-card-links a:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
+
 @media (max-width: 780px) {
     .directory { --directory-gutter: 20px; }
     .directory-hero { min-height: auto; grid-template-columns: 1fr; gap: 34px; padding: 48px 0; }
@@ -125,4 +163,6 @@
 
 @media (max-width: 480px) {
     .directory-card-foot { align-items: flex-start; flex-direction: column; gap: 8px; }
+    .hackops-project-body { grid-template-columns: minmax(0, 1fr) 76px; gap: 18px; }
+    .hackops-project-card { min-height: 360px !important; }
 }
